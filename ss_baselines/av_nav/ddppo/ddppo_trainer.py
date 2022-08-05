@@ -79,7 +79,12 @@ class DDPPOTrainer(PPOTrainer):
         )
 
         self.actor_critic.to(self.device)
-
+        print("##################################")
+        print("### DEBUG: Actor Critic config    ")
+        print("##################################")
+        print(self.actor_critic)
+        input()
+        
         if self.config.RL.DDPPO.reset_critic:
             nn.init.orthogonal_(self.actor_critic.critic.fc.weight)
             nn.init.constant_(self.actor_critic.critic.fc.bias, 0)

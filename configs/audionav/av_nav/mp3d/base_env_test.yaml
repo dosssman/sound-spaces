@@ -1,3 +1,4 @@
+# Based on audiogoal.yaml
 ENVIRONMENT:
   MAX_EPISODE_STEPS: 500
 SIMULATOR:
@@ -21,13 +22,13 @@ TASK:
   TYPE: AudioNav
   SUCCESS_DISTANCE: 1.0
 
-  # Original
+  # Spectrogram based
   # SENSORS: ['SPECTROGRAM_SENSOR']
   # GOAL_SENSOR_UUID: spectrogram
 
-  # For eval support
+  # Waveform based
   SENSORS: ['AUDIOGOAL_SENSOR', 'SPECTROGRAM_SENSOR']
-  GOAL_SENSOR_UUID: spectrogram # audiogoal
+  GOAL_SENSOR_UUID: audiogoal
 
   MEASUREMENTS: ['DISTANCE_TO_GOAL', 'NORMALIZED_DISTANCE_TO_GOAL', 'SUCCESS', 'SPL', 'SOFT_SPL', 'NUM_ACTION', 'SUCCESS_WEIGHTED_BY_NUM_ACTION']
   SUCCESS:

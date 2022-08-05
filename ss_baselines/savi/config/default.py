@@ -157,6 +157,7 @@ _TC.SIMULATOR.VIEW_CHANGE_FPS = 10
 _TC.SIMULATOR.SCENE_DATASET = 'replica'
 _TC.SIMULATOR.USE_RENDERED_OBSERVATIONS = True
 _TC.SIMULATOR.SCENE_OBSERVATION_DIR = 'data/scene_observations'
+_TC.SIMULATOR.STEP_TIME = 1.0
 _TC.SIMULATOR.AUDIO = CN()
 _TC.SIMULATOR.AUDIO.SCENE = ""
 _TC.SIMULATOR.AUDIO.EVERLASTING = True
@@ -168,6 +169,8 @@ _TC.SIMULATOR.AUDIO.POINTS_FILE = 'points.txt'
 _TC.SIMULATOR.AUDIO.GRAPH_FILE = 'graph.pkl'
 _TC.SIMULATOR.AUDIO.HAS_DISTRACTOR_SOUND = False
 _TC.SIMULATOR.AUDIO.DISTRACTOR_SOUND_DIR = 'data/sounds/1s_all_distractor'
+_TC.SIMULATOR.AUDIO.IR_TIME = 1.0
+_TC.SIMULATOR.AUDIO.CROSSFADE = False
 # -----------------------------------------------------------------------------
 # DistanceToGoal Measure
 # -----------------------------------------------------------------------------
@@ -177,6 +180,7 @@ _TC.TASK.NORMALIZED_DISTANCE_TO_GOAL.TYPE = "NormalizedDistanceToGoal"
 # Dataset extension
 # -----------------------------------------------------------------------------
 _TC.DATASET.VERSION = 'v1'
+_TC.DATASET.CONTINUOUS = False
 # -----------------------------------------------------------------------------
 # NumberOfAction Measure
 # -----------------------------------------------------------------------------
@@ -291,6 +295,20 @@ def get_config(
 
     config.TASK_CONFIG.defrost()
     config.TASK_CONFIG.SIMULATOR.USE_SYNC_VECENV = config.USE_SYNC_VECENV
+    if config.CONTINUOUS:
+        config.TASK_CONFIG.SIMULATOR.FORWARD_STEP_SIZE = 0.25
+        config.TASK_CONFIG.SIMULATOR.TYPE = "ContinuousSoundSpacesSim"
+        config.TASK_CONFIG.SIMULATOR.USE_RENDERED_OBSERVATIONS = False
+        config.TASK_CONFIG.SIMULATOR.STEP_TIME = 0.25
+        config.TASK_CONFIG.SIMULATOR.AUDIO.CROSSFADE = True
+        config.TASK_CONFIG.DATASET.CONTINUOUS = True
+        # config.RL.DISTANCE_REWARD_SCALE = 1.0
+
+        # config.TASK_CONFIG.SIMULATOR.STEP_TIME = 1.0
+        # config.TASK_CONFIG.SIMULATOR.FORWARD_STEP_SIZE = 1.0
+        # config.TASK_CONFIG.SIMULATOR.TURN_ANGLE = 90
+    else:
+        config.TASK_CONFIG.SIMULATOR.FORWARD_STEP_SIZE = config.TASK_CONFIG.SIMULATOR.GRID_SIZE
     config.TASK_CONFIG.freeze()
     config.freeze()
     return config

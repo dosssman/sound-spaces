@@ -120,7 +120,7 @@ class PPOTrainer(BaseRLTrainer):
 
     def _collect_rollout_step(
         self, rollouts, current_episode_reward, current_episode_step, episode_rewards,
-            episode_spls, episode_counts, episode_steps
+            episode_spls, episode_counts, episode_steps, episode_success
     ):
         pth_time = 0.0
         env_time = 0.0
@@ -165,6 +165,9 @@ class PPOTrainer(BaseRLTrainer):
         spls = torch.tensor(
             [[info['spl']] for info in infos]
         )
+        successes = torch.tensor(
+            [[info['success']] for info in infos]
+        )
 
         current_episode_reward += rewards
         current_episode_step += 1
@@ -176,6 +179,7 @@ class PPOTrainer(BaseRLTrainer):
         episode_spls += (1 - masks) * spls
         episode_steps += (1 - masks) * current_episode_step
         episode_counts += 1 - masks
+        episode_success += (1 - masks) * successes
         current_episode_reward *= masks
         current_episode_step *= masks
 
@@ -277,12 +281,14 @@ class PPOTrainer(BaseRLTrainer):
         episode_spls = torch.zeros(self.envs.num_envs, 1)
         episode_steps = torch.zeros(self.envs.num_envs, 1)
         episode_counts = torch.zeros(self.envs.num_envs, 1)
+        episode_success = torch.zeros(self.envs.num_envs, 1)
         current_episode_reward = torch.zeros(self.envs.num_envs, 1)
         current_episode_step = torch.zeros(self.envs.num_envs, 1)
         window_episode_reward = deque(maxlen=ppo_cfg.reward_window_size)
         window_episode_spl = deque(maxlen=ppo_cfg.reward_window_size)
         window_episode_step = deque(maxlen=ppo_cfg.reward_window_size)
         window_episode_counts = deque(maxlen=ppo_cfg.reward_window_size)
+        window_episode_success = deque(maxlen=ppo_cfg.reward_window_size)
 
         t_start = time.time()
         env_time = 0
@@ -315,7 +321,8 @@ class PPOTrainer(BaseRLTrainer):
                         episode_rewards,
                         episode_spls,
                         episode_counts,
-                        episode_steps
+                        episode_steps,
+                        episode_success
                     )
                     pth_time += delta_pth_time
                     env_time += delta_env_time
@@ -330,11 +337,13 @@ class PPOTrainer(BaseRLTrainer):
                 window_episode_spl.append(episode_spls.clone())
                 window_episode_step.append(episode_steps.clone())
                 window_episode_counts.append(episode_counts.clone())
+                window_episode_success.append(episode_success.clone())
 
                 losses = [value_loss, action_loss, dist_entropy]
                 stats = zip(
-                    ["count", "reward", "step", 'spl'],
-                    [window_episode_counts, window_episode_reward, window_episode_step, window_episode_spl],
+                    ["count", "reward", "step", 'spl', "success"],
+                    [window_episode_counts, window_episode_reward, window_episode_step,
+                     window_episode_spl, window_episode_success],
                 )
                 deltas = {
                     k: (
@@ -349,13 +358,19 @@ class PPOTrainer(BaseRLTrainer):
                 # this reward is averaged over all the episodes happened during window_size updates
                 # approximately number of steps is window_size * num_steps
                 if update % 10 == 0:
-                    writer.add_scalar("Environment/Reward", deltas["reward"] / deltas["count"], count_steps)
-                    writer.add_scalar("Environment/SPL", deltas["spl"] / deltas["count"], count_steps)
-                    writer.add_scalar("Environment/Episode_length", deltas["step"] / deltas["count"], count_steps)
-                    writer.add_scalar('Policy/Value_Loss', value_loss, count_steps)
-                    writer.add_scalar('Policy/Action_Loss', action_loss, count_steps)
-                    writer.add_scalar('Policy/Entropy', dist_entropy, count_steps)
-                    writer.add_scalar('Policy/Learning_Rate', lr_scheduler.get_lr()[0], count_steps)
+                    # writer.add_scalar("Environment/Reward", deltas["reward"] / deltas["count"], count_steps)
+                    # writer.add_scalar("Environment/SPL", deltas["spl"] / deltas["count"], count_steps)
+                    # writer.add_scalar("Environment/success", deltas["success"] / deltas["count"], count_steps)
+                    # writer.add_scalar("Environment/Episode_length", deltas["step"] / deltas["count"], count_steps)
+                    # Compatibility with DDPPO logged metrics for comparison
+                    writer.add_scalar("Metrics/reward", deltas["reward"] / deltas["count"], count_steps)
+                    writer.add_scalar("Metrics/spl", deltas["spl"] / deltas["count"], count_steps)
+                    writer.add_scalar("Metrics/success", deltas["success"] / deltas["count"], count_steps)
+
+                    writer.add_scalar('Policy/value_loss', value_loss, count_steps)
+                    writer.add_scalar('Policy/action_loss', action_loss, count_steps)
+                    writer.add_scalar('Policy/entropy_loss', dist_entropy, count_steps)
+                    writer.add_scalar('Policy/learning_rate', lr_scheduler.get_lr()[0], count_steps)
 
                 # log stats
                 if update > 0 and update % self.config.LOG_INTERVAL == 0:
