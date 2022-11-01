@@ -122,7 +122,9 @@ class ContinuousSoundSpacesSim(Simulator, ABC):
         acoustics_config.transmission = True
 
         channel_layout = habitat_sim.sensor.RLRAudioPropagationChannelLayout()
-        channel_layout.channelType = habitat_sim.sensor.RLRAudioPropagationChannelLayoutType.Binaural
+        # channel_layout.channelType = habitat_sim.sensor.RLRAudioPropagationChannelLayoutType.Binaural
+        import habitat_sim._ext.habitat_sim_bindings as hsim_bindings
+        channel_layout.channelType = hsim_bindings.RLRAudioPropagationChannelLayoutType.Binaural
         channel_layout.channelCount = 2
 
         audio_sensor_spec = habitat_sim.AudioSensorSpec()
