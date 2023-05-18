@@ -487,7 +487,7 @@ class NpEncoder(json.JSONEncoder):
             return super(NpEncoder, self).default(obj)
 
 
-def observations_to_image(observation: Dict, info: Dict, pred=None) -> np.ndarray:
+def observations_to_image(observation: Dict, info: Dict, pred=None, with_depth=True) -> np.ndarray:
     r"""Generate image of single frame from observation and info
     returned from a single environment step().
 
@@ -508,7 +508,7 @@ def observations_to_image(observation: Dict, info: Dict, pred=None) -> np.ndarra
         egocentric_view.append(rgb)
 
     # draw depth map if observation has depth info
-    if "depth" in observation:
+    if "depth" in observation and with_depth:
         observation_size = observation["depth"].shape[0]
         depth_map = observation["depth"].squeeze() * 255.0
         if not isinstance(depth_map, np.ndarray):
@@ -628,6 +628,16 @@ def observations_to_image(observation: Dict, info: Dict, pred=None) -> np.ndarra
                 [np.ones([text_height, top_down_map.shape[1], 3], dtype=np.int32) * 255, top_down_map], axis=0)
             top_down_map = cv2.putText(top_down_map, 'C_t: ' + pred_label.replace('_', ' '), (10, text_height - 10),
                                        cv2.FONT_HERSHEY_SIMPLEX, 1.4, (0, 0, 0), 2, cv2.LINE_AA)
+        
+        # Fit value range of top_down_map to [0, 255] like "rgb" and "depth"
+        top_down_map = rescale_linear(top_down_map, 0, 255).astype(np.uint8)
 
         frame = np.concatenate((egocentric_view, top_down_map), axis=1)
     return frame
+
+def rescale_linear(array, new_min, new_max):
+    """Rescale an array linearly."""
+    minimum, maximum = np.min(array), np.max(array)
+    m = (new_max - new_min) / (maximum - minimum)
+    b = new_min - m * minimum
+    return m * array + b
