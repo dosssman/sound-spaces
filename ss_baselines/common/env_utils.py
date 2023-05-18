@@ -124,13 +124,13 @@ def make_env_fn(
         level = logging.DEBUG if config.DEBUG else logging.INFO
         logging.basicConfig(level=level, format='%(asctime)s, %(levelname)s: %(message)s',
                             datefmt="%Y-%m-%d %H:%M:%S")
-        random.seed(rank)
-        np.random.seed(rank)
-        torch.manual_seed(rank)
+    random.seed(config.SEED + rank)
+    np.random.seed(config.SEED + rank)
+    torch.manual_seed(config.SEED + rank)
 
     dataset = make_dataset(
         config.TASK_CONFIG.DATASET.TYPE, config=config.TASK_CONFIG.DATASET
     )
     env = env_class(config=config, dataset=dataset)
-    env.seed(rank)
+    env.seed(config.SEED + rank)
     return env
