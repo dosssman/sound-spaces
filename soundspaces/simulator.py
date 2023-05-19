@@ -195,8 +195,6 @@ class SoundSpacesSim(Simulator, ABC):
             # These keys are only used by Hab-Lab
             ignore_keys={
                 "is_set_start_state",
-                "distractor_sound_id",
-                "distractor_position_index",
                 # This is the Sensor Config. Unpacked below
                 "sensors",
                 "start_position",
@@ -211,6 +209,8 @@ class SoundSpacesSim(Simulator, ABC):
                 "linear_friction",
                 "angular_friction",
                 "coefficient_of_restitution",
+                "distractor_sound_id",
+                "distractor_position_index"
             },
         )
 
