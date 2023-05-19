@@ -112,3 +112,10 @@ class AudioNavRLEnv(habitat.RLEnv):
     # for data collection
     def get_current_episode_id(self):
         return self.habitat_env.current_episode.episode_id
+
+    # workaround to obtain oracle actions for VecEnv wrapped env
+    def get_oracle_action_at_step(self, step):
+        return self._env._sim._oracle_actions[step]
+
+    def get_scene_id(self):
+        return self._env.current_episode.scene_id.split("/")[3]
