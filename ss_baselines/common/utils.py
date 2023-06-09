@@ -66,7 +66,7 @@ class CategoricalNet(nn.Module):
 
     def forward(self, x):
         x = self.linear(x)
-        return CustomFixedCategorical(logits=x)
+        return CustomFixedCategorical(logits=x), x
 
 
 class CategoricalNetWithMask(nn.Module):
