@@ -68,6 +68,23 @@ class CategoricalNet(nn.Module):
         x = self.linear(x)
         return CustomFixedCategorical(logits=x), x
 
+# Deeper categorical policy network
+class CategoricalNet2(nn.Module):
+    def __init__(self, num_inputs, hidden_size, num_outputs):
+        super().__init__()
+
+        self.linear = nn.Sequential(
+            nn.Linear(num_inputs, hidden_size),
+            nn.ReLU(True),
+            nn.Linear(hidden_size, hidden_size),
+            nn.ReLU(True),
+            nn.Linear(hidden_size, num_outputs)
+        )
+
+    def forward(self, x):
+        x = self.linear(x)
+        return CustomFixedCategorical(logits=x), x
+
 
 class CategoricalNetWithMask(nn.Module):
     def __init__(self, num_inputs, num_outputs, masking):
